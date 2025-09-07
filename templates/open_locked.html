@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Geo Vault Pro - Open Locked Files</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url("{{ url_for('static', filename='bg.jpg') }}");
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      background-size: cover;
+      color: #fff;
+    }
+
+    /* Navbar */
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 15px 30px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+      z-index: 2000;
+    }
+
+    .navbar .logo span {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #f4c10f;
+    }
+
+    .navbar .navbar-left a {
+      margin-left: 20px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+    }
+
+    .navbar .navbar-left a:hover {
+      color: #f4c10f;
+    }
+
+    /* Flash messages */
+    .flash {
+      margin-top: 15px;
+      width: 60%;
+      max-width: 800px;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+      opacity: 1;
+      transition: opacity 0.5s ease;
+    }
+
+    .flash.success {
+      background-color: rgba(212, 237, 218, 0.85);
+      color: #155724;
+    }
+
+    .flash.error {
+      background-color: rgba(248, 215, 218, 0.85);
+      color: #721c24;
+    }
+
+    /* Container below navbar */
+    .main-section {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      padding: 40px 20px;
+      min-height: calc(100vh - 80px);
+      width: 100%;
+      flex-direction: column;
+    }
+
+    /* OTP box */
+    .otp-below {
+      position: fixed;  
+      top: 100px;          
+      left: 20px;          
+      width: 260px;
+      text-align: center;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+
+    .otp-code {
+      font-size: 48px;
+      font-weight: bold;
+      color: #f4c10f;
+      margin-bottom: 10px;
+    }
+
+    .timer {
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .back-button {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .back-button button {
+      background-color: #444;
+      color: white;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .back-button button:hover {
+      background-color: #f4c10f;
+      color: #111;
+    }
+
+    /* Heading above boxes */
+    .page-heading {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 1.6rem;
+      text-shadow: 1px 1px 4px #000;
+      color: #f4c10f;
+      width: 100%;
+    }
+
+    /* Boxes container */
+    .main-wrapper {
+      margin-top: 20px; /* reduced from 200px */
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      width: 100%;
+    }
+
+    .container {
+      padding: 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 25px;
+      max-width: 800px;
+      margin: 0 auto;
+      margin-top: 20px;
+    }
+
+    .file-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(12px);
+      padding: 25px;
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: #fff;
+    }
+
+    .file-card strong {
+      display: block;
+      margin-bottom: 12px;
+      font-size: 1rem;
+      color: #f4c10f;
+    }
+
+    .file-card input,
+    .file-card button {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      border: none;
+      font-size: 0.95rem;
+    }
+
+    .file-card input {
+      background-color: rgba(255,255,255,0.85);
+      color: #111;
+    }
+
+    .file-card button {
+      background-color: #f4c10f;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    .file-card button:hover {
+      background-color: #ffdb4d;
+    }
+
+    /* Lock animation overlay */
+    .lock-animation {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(10, 10, 10, 0.8);
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      animation: fadeOut 2s forwards 2s;
+    }
+
+    .lock-animation img {
+      width: 150px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        visibility: hidden;
+      }
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-15px); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="navbar">
+    <div class="logo">
+      <span>Geo Vault Pro</span>
+    </div>
+    <div class="navbar-left">
+      <a href="{{ url_for('home') }}">HOME</a>
+      <a href="{{ url_for('ip_gate') }}">LAT&LON</a>
+      <a href="{{ url_for('open_locked') }}">FOLDERS</a>
+      <a href="{{ url_for('downloadfiles') }}">DECRYPTED FILES</a>
+      <a href="/about">ABOUT-US</a>
+      <a href="{{ url_for('logout') }}">LOGOUT</a>
+    </div>
+  </div>
+
+  <div class="back-button">
+    <button onclick="history.back()">← Back</button>
+  </div>
+
+  <div class="main-section">
+    <!-- OTP box -->
+    <div class="otp-below">
+      <h2>🔐 Your OTP</h2>
+      <div class="otp-code" id="otp">Loading...</div>
+      <div class="timer" id="timer">Next update in 30 seconds</div>
+    </div>
+
+    <!-- Flash messages above heading -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <h2 class="page-heading">Unlock Protected Files</h2>
+
+    <div class="main-wrapper">
+      <div class="container">
+        {% for file in files %}
+        <div class="file-card">
+          <form method="POST" action="/decrypt_file" onsubmit="return showUnlockEffect(this);">
+            <input type="hidden" name="filename" value="{{ file }}">
+            <strong>{{ file }}</strong>
+            <input type="text" name="password" placeholder="Enter Password" required>
+            <input type="text" name="latitude" placeholder="Enter Latitude" required>
+            <input type="text" name="longitude" placeholder="Enter Longitude" required>
+            <input type="text" name="otp" placeholder="Enter OTP" required>
+            <button type="submit">Unlock & Download</button>
+          </form>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- 🔓 Lock animation overlay -->
+  <div id="lockEffect" class="lock-animation" style="display: none;">
+    <img src="{{ url_for('static', filename='lock.gif') }}" alt="Unlocking..." />
+  </div>
+
+  <script>
+    function showUnlockEffect(form) {
+      document.getElementById('lockEffect').style.display = 'flex';
+      setTimeout(() => { form.submit(); }, 2200);
+      return false;
+    }
+
+    function generateOTP() {
+      return Math.floor(100000 + Math.random() * 900000);
+    }
+
+    function updateOTP() {
+      const otp = generateOTP();
+      document.getElementById("otp").textContent = otp;
+
+      // Auto-fill all OTP input fields
+      document.querySelectorAll('input[name="otp"]').forEach(input => {
+        input.value = otp;
+      });
+
+      let secondsLeft = 30;
+      const timerEl = document.getElementById("timer");
+      timerEl.textContent = `Next update in ${secondsLeft} seconds`;
+      const countdown = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft <= 0) {
+          clearInterval(countdown);
+          updateOTP();
+        } else {
+          timerEl.textContent = `Next update in ${secondsLeft} seconds`;
+        }
+      }, 1000);
+    }
+
+    updateOTP();
+
+    // Auto fadeout flash messages after 4 seconds
+    setTimeout(() => {
+      const flashes = document.querySelectorAll('.flash');
+      flashes.forEach(flash => {
+        flash.style.opacity = '0';
+        setTimeout(() => flash.remove(), 500);
+      });
+    }, 4000);
+
+    // Auto-fill latitude & longitude from geolocation
+    document.addEventListener('DOMContentLoaded', () => {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            document.querySelectorAll('input[name="latitude"]').forEach(lat => {
+              lat.value = position.coords.latitude.toFixed(6);
+            });
+            document.querySelectorAll('input[name="longitude"]').forEach(lon => {
+              lon.value = position.coords.longitude.toFixed(6);
+            });
+          },
+          (error) => {
+            console.warn('Geolocation error:', error.message);
+          },
+          {
+            enableHighAccuracy: true,
+            timeout: 5000,
+            maximumAge: 0
+          }
+        );
+      }
+    });
+  </script>
+  
+</body>
+</html>

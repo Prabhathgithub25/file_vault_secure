@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: url("{{ url_for('static', filename='bg.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .login-box {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.8);
+      width: 350px;
+      text-align: center;
+      color: white;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    .login-box h2 {
+      margin-bottom: 25px;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(90deg, #00c6ff, #0072ff);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+      transition: transform 0.2s, background 0.3s;
+    }
+
+    .login-box button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(90deg, #0072ff, #00c6ff);
+    }
+
+    .extra-links {
+      margin-top: 15px;
+    }
+
+    .extra-links a {
+      color: #00c6ff;
+      text-decoration: none;
+    }
+
+    /* Flash message styling */
+    .flash {
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      animation: fadeInDown 0.8s ease;
+    }
+
+    .flash.error {
+      background: rgba(255, 0, 0, 0.8);
+      color: white;
+    }
+
+    .flash.success {
+      background: rgba(0, 200, 0, 0.8);
+      color: white;
+    }
+
+    @keyframes fadeIn {
+      from {opacity: 0; transform: translateY(-20px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+
+    @keyframes fadeInDown {
+      from {opacity: 0; transform: translateY(-10px);}
+      to {opacity: 1; transform: translateY(0);}
+    }
+  </style>
+</head>
+<body>
+  <div class="login-box">
+    <h2>Login</h2>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST" action="/login">
+      <input type="text" name="username" placeholder="Enter Username" required>
+      <input type="password" name="password" placeholder="Enter Password" required>
+      <button type="submit">Login</button>
+    </form>
+    <div class="extra-links">
+      <p>Don't have an account? <a href="/signup">Sign Up</a></p>
+    </div>
+  </div>
+</body>
+</html>

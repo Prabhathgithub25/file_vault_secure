@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url("{{ url_for('static', filename='bg.jpg') }}");
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      background-size: cover;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      color: #fff;
+    }
+    .signup-box {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.8);
+      width: 350px;
+      text-align: center;
+    }
+    .signup-box h2 {
+      margin-bottom: 25px;
+    }
+    .signup-box input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+    .signup-box button {
+      width: 100%;
+      padding: 12px;
+      background: #00c6ff;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: bold;
+    }
+    .signup-box button:hover {
+      background: #0072ff;
+    }
+    .extra-links {
+      margin-top: 15px;
+    }
+    .extra-links a {
+      color: #00c6ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="signup-box">
+    <h2>Sign Up</h2>
+    <form method="POST" action="/signup">
+      <input type="text" name="username" placeholder="Choose Username" required>
+      <input type="email" name="email" placeholder="Enter Email" required>
+      <input type="password" name="password" placeholder="Choose Password" required>
+      <button type="submit">Create Account</button>
+    </form>
+    <div class="extra-links">
+      <p>Already have an account? <a href="/login">Login</a></p>
+    </div>
+  </div>
+</body>
+</html>

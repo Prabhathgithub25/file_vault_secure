@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Geo Vault Pro</title>
+  <style>
+     * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background-image: url("{{ url_for('static', filename='bg.jpg') }}");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-attachment: fixed;
+    background-size: cover;
+    color: #fff;
+    }
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5); /* black with 50% transparency */
+
+      padding: 15px 30px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+
+    .navbar .logo {
+      display: flex;
+      align-items: center;
+    }
+
+    .navbar .logo img {
+      height: 40px;
+      margin-right: 10px;
+    }
+
+    .navbar .logo span {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #f4c10f;
+    }
+
+    .navbar .navbar-left a {
+      margin-left: 20px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+    }
+
+    .navbar .navbar-left a:hover {
+      color: #f4c10f;
+    }
+
+    
+   
+
+    .main-content {
+      padding: 30px;
+      max-width: 1000px;
+      margin: auto;
+    }
+
+    .vault {
+      padding: 40px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0,0,0,0.2);
+      position: relative;
+      background-color: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(8px);
+    }
+
+    .vault::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 0;
+    }
+
+    .vault > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    .marquee-box {
+      width: 100%;
+      overflow: hidden;
+      position: relative;
+      background: rgba(34, 34, 34, 0.8);
+      color: #f4c10f;
+      border-radius: 8px;
+      padding: 14px 0;
+      margin-bottom: 30px;
+      font-weight: bold;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    }
+
+    .marquee-text {
+      display: inline-block;
+      white-space: nowrap;
+      padding-left: 100%;
+      animation: scroll-left 12s linear infinite;
+      font-size: 22px;
+    }
+
+    @keyframes scroll-left {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-100%); }
+    }
+
+    .flash-message {
+      background-color: beige;
+      color: #222;
+      padding: 12px 20px;
+      margin: 20px auto;
+      border-radius: 8px;
+      text-align: center;
+      max-width: 500px;
+      font-weight: bold;
+    }
+
+    /* .info-card {
+      background-color: rgba(255, 255, 255, 0.15);
+      padding: 20px;
+      border-radius: 10px;
+      margin-top: 30px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      color: #ddd;
+    }
+
+    .info-card h4 {
+      margin-bottom: 12px;
+      font-size: 20px;
+      color: #fff;
+    }
+
+    .info-card ul {
+      list-style-type: square;
+      padding-left: 20px;
+    }
+
+    .info-card li {
+      margin-bottom: 8px;
+    } */
+
+    .location {
+      margin-top: 30px;
+    }
+
+    .location h3 {
+      font-size: 24px;
+      margin-bottom: 15px;
+    }
+
+    .location p {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .back-btn-container {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .back-btn {
+      background-color: #444;
+      color: white;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      background-color: #f4c10f;
+      color: #111;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <div class="navbar">
+    <div class="logo">
+      <span>Geo Vault Pro</span>
+    </div>
+    <div class="navbar-left">
+      <a href="{{ url_for('home') }}">HOME</a>
+      <a href="{{ url_for('ip_gate') }}">LAT&LON</a>
+      <a href="{{ url_for('open_locked') }}">FOLDERS</a>
+      <a href="{{ url_for('downloadfiles') }}">DECRYPTED FILES</a>
+      <a href="/about">ABOUT-US</a>
+      <a href="{{ url_for('logout') }}">LOGOUT</a>
+    </div>
+  </div>
+
+  <!-- Back Button (Fixed Right Corner) -->
+  <div class="back-btn-container">
+    <button class="back-btn" onclick="history.back()">← Back</button>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for msg in messages %}
+        <div class="flash-message">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Main Vault -->
+  <div class="main-content">
+    <div class="vault">
+      <div class="marquee-box">
+        <div class="marquee-text">{{ secret }}</div>
+      </div>
+
+      <div class="location">
+        <h3>Your Current Location:</h3>
+        <p id="lat">Latitude: Detecting...</p>
+        <p id="lon">Longitude: Detecting...</p>
+        <p id="city">City: Detecting...</p>
+        <p id="region">State: Detecting...</p>
+        <p id="country">Country: Detecting...</p>
+      </div>
+
+      <!-- Info Card Filler -->
+      <!-- <div class="info-card">
+        <h4>💡 Usage Tips:</h4>
+        <ul>
+          <li>Make sure your location access is enabled in the browser.</li>
+          <li>Files are protected based on your current geographic data.</li>
+          <li>Use the OTP page to generate the secure access key.</li>
+          <li>Return to "FOLDERS" to open locked files with proper credentials.</li>
+        </ul>
+      </div>
+    </div>
+  </div> -->
+
+  <!-- JS: Geolocation -->
+  <script>
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const lat = position.coords.latitude;
+      const lon = position.coords.longitude;
+
+      document.getElementById("lat").textContent = "Latitude: " + lat;
+      document.getElementById("lon").textContent = "Longitude: " + lon;
+
+      fetch(`https://geocode.maps.co/reverse?lat=${lat}&lon=${lon}`)
+        .then(response => response.json())
+        .then(data => {
+          const address = data.address || {};
+          const city = address.city || address.town || address.village || address.hamlet || address.municipality || address.county || "N/A";
+          const state = address.state || address.region || "N/A";
+          const country = address.country || "N/A";
+
+          document.getElementById("city").textContent = "City: " + city;
+          document.getElementById("region").textContent = "State: " + state;
+          document.getElementById("country").textContent = "Country: " + country;
+        })
+        .catch(() => {
+          document.getElementById("city").textContent = "City: Not available";
+          document.getElementById("region").textContent = "State: Not available";
+          document.getElementById("country").textContent = "Country: Not available";
+        });
+
+    }, () => {
+      document.getElementById("lat").textContent = "Latitude: Unable to retrieve";
+      document.getElementById("lon").textContent = "Longitude: Unable to retrieve";
+    });
+  } else {
+    document.getElementById("lat").textContent = "Latitude: Not supported";
+    document.getElementById("lon").textContent = "Longitude: Not supported";
+  }
+  </script>
+
+</body>
+</html>

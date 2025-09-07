@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Decrypted Files - Geo Vault Pro</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-image: url("{{ url_for('static', filename='bg.jpg') }}");
+      background-repeat: no-repeat;
+      background-position: center center;
+      background-attachment: fixed;
+      background-size: cover;
+      color: #fff;
+    }
+
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: rgba(0, 0, 0, 0.5);
+      padding: 15px 30px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    }
+
+    .navbar .logo span {
+      font-size: 1.4rem;
+      font-weight: bold;
+      color: #f4c10f;
+    }
+
+    .navbar .navbar-left a {
+      margin-left: 20px;
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      transition: color 0.3s ease;
+    }
+
+    .navbar .navbar-left a:hover {
+      color: #f4c10f;
+    }
+
+    .back-button {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      z-index: 1000;
+    }
+
+    .back-button button {
+      background-color: #444;
+      color: white;
+      padding: 8px 18px;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .back-button button:hover {
+      background-color: #f4c10f;
+      color: #111;
+    }
+
+    h1 {
+      text-align: center;
+      color: #f4c10f;
+      margin-top: 60px;
+      font-size: 2rem;
+    }
+
+    .file-list {
+      max-width: 700px;
+      margin: 30px auto;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 25px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    }
+
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding: 12px 0;
+    }
+
+    .file-name {
+      color: #fff;
+      word-break: break-word;
+    }
+
+    .download-btn {
+      background-color: #f4c10f;
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      text-decoration: none;
+      transition: background-color 0.3s ease;
+    }
+
+    .download-btn:hover {
+      background-color: #ffdb4d;
+    }
+
+    .no-files {
+      text-align: center;
+      color: #ccc;
+      font-style: italic;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="navbar">
+    <div class="logo">
+      <span>Geo Vault Pro</span>
+    </div>
+    <div class="navbar-left">
+      <a href="{{ url_for('home') }}">HOME</a>
+      <a href="{{ url_for('ip_gate') }}">LAT&LON</a>
+      <a href="{{ url_for('open_locked') }}">FOLDERS</a>
+      <a href="{{ url_for('downloadfiles') }}">DECRYPTED FILES</a>
+      <a href="/about">ABOUT-US</a>
+       <a href="{{ url_for('logout') }}">LOGOUT</a>
+    </div>
+  </div>
+
+  <div class="back-button">
+    <button onclick="history.back()">← Back</button>
+  </div>
+
+  <h1>📁 Decrypted Files</h1>
+
+  <div class="file-list">
+    {% if files %}
+      {% for file in files %}
+        <div class="file-item">
+          <div class="file-name">{{ file }}</div>
+          <a href="{{ url_for('download_decrypted', filename=file) }}" class="download-btn">Download</a>
+        </div>
+      {% endfor %}
+    {% else %}
+      <p class="no-files">No decrypted files found.</p>
+    {% endif %}
+  </div>
+</body>
+</html>
