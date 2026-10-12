@@ -6,8 +6,55 @@ from cryptography.fernet import Fernet
 app = Flask(__name__)
 app.secret_key = 'supersecretkey'
 
-# ---------------- LOGIN SYSTEM ----------------
 
+@app.after_request
+def disable_cache(response):
+    if "text/html" in response.headers.get("Content-Type", ""):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    return response
+
+
+# ================= GLOBAL WEBSITE LOCK =================
+LOCK_FILE = "site_lock.json"
+SECRET_CODE = "SECURE123"
+
+def load_lock():
+    if os.path.exists(LOCK_FILE):
+        with open(LOCK_FILE, "r") as f:
+            return json.load(f)
+    return {"locked": False}
+
+def save_lock(data):
+    with open(LOCK_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+# ================= ATTACK LOG =================
+LOG_FILE = "attack_logs.json"
+
+def load_logs():
+    if os.path.exists(LOG_FILE):
+        with open(LOG_FILE, "r") as f:
+            return json.load(f)
+    return []
+
+def save_logs(data):
+    with open(LOG_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+# ================= WRONG ATTEMPTS =================
+ATTEMPTS_FILE = "attempts.json"
+
+def load_attempts():
+    if os.path.exists(ATTEMPTS_FILE):
+        with open(ATTEMPTS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_attempts(data):
+    with open(ATTEMPTS_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+# ================= LOGIN SYSTEM =================
 USERS_FILE = "users.json"
 
 def load_users():
@@ -20,65 +67,62 @@ def save_users(users):
     with open(USERS_FILE, "w") as f:
         json.dump(users, f, indent=4)
 
+@app.before_request
+def force_full_lock():
+
+    lock = load_lock().get("locked")
+
+    # allow only unlock page + static files
+    allowed_routes = ["unlock_site", "static"]
+
+    if lock:
+        if request.endpoint not in allowed_routes:
+            return redirect(url_for("unlock_site"))
+
+
 @app.route("/")
 def index():
     return redirect(url_for("login"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    users = load_users()
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        u = request.form["username"]
+        p = request.form["password"]
 
-        users = load_users()
-
-        if username not in users:
-            flash("❌ Account not found!", "error")
-            return render_template("login.html")
-        elif users[username] == password:
-            session["user"] = username
-            flash("✅ Login successful!", "success")
-            return redirect(url_for("vault_home"))
+        if u not in users:
+            flash("Account not found!", "error")
+        elif users[u] == p:
+            session["user"] = u
+            flash("Login successful!", "success")
+            return redirect(url_for("home"))
         else:
-            flash("❌ Wrong username or password!", "error")
-            return render_template("login.html")
-
+            flash("Wrong password!", "error")
     return render_template("login.html")
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    users = load_users()
     if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
+        u = request.form["username"]
+        p = request.form["password"]
 
-        users = load_users()
-
-        if username in users:
-            flash("❌ User already exists!", "error")
-            return render_template("signup.html")
-
-        users[username] = password
-        save_users(users)
-
-        flash("✅ Account created successfully! Please log in.", "success")
-        return redirect(url_for("login"))
-
+        if u in users:
+            flash("User exists!", "error")
+        else:
+            users[u] = p
+            save_users(users)
+            flash("Signup successful!", "success")
+            return redirect(url_for("login"))
     return render_template("signup.html")
-
-@app.route("/home")
-def home():
-    if "user" in session:
-        return render_template("home.html", user=session["user"])
-    return redirect(url_for("login"))
 
 @app.route("/logout")
 def logout():
-    session.pop("user", None)
-    flash("✅ You have been logged out.", "info")
+    session.clear()
     return redirect(url_for("login"))
 
-# ---------------- FILE ENCRYPTION SYSTEM ----------------
-
+# ================= ENCRYPTION =================
 BASE_UPLOAD_FOLDER = 'locked_files'
 BASE_TEMP_FOLDER = 'temp_uploads'
 BASE_DECRYPTED_FOLDER = 'decrypted_files'
@@ -91,92 +135,181 @@ KEY_FILE = 'secret.key'
 
 def load_or_create_key():
     if os.path.exists(KEY_FILE):
-        with open(KEY_FILE, 'rb') as f:
-            return f.read()
-    else:
-        new_key = Fernet.generate_key()
-        with open(KEY_FILE, 'wb') as f:
-            f.write(new_key)
-        return new_key
+        return open(KEY_FILE, 'rb').read()
+    key = Fernet.generate_key()
+    open(KEY_FILE, 'wb').write(key)
+    return key
 
-key = load_or_create_key()
-cipher = Fernet(key)
-
-def encrypt_data(data):
-    return cipher.encrypt(data.encode()).decode()
-
-def decrypt_data(data):
-    return cipher.decrypt(data.encode()).decode()
+cipher = Fernet(load_or_create_key())
 
 def generate_otp():
     return str(int(time.time()) % 1000000).zfill(6)
 
-# -------- Per-user folders --------
+def encrypt_data(data: str) -> str:
+    return cipher.encrypt(data.encode()).decode()
+
+def decrypt_data(data: str) -> str:
+    return cipher.decrypt(data.encode()).decode()
 
 def get_user_locked_folder():
-    folder = os.path.join(BASE_UPLOAD_FOLDER, session["user"])
-    os.makedirs(folder, exist_ok=True)
-    return folder
+    f = os.path.join(BASE_UPLOAD_FOLDER, session["user"])
+    os.makedirs(f, exist_ok=True)
+    return f
 
 def get_user_decrypted_folder():
-    folder = os.path.join(BASE_DECRYPTED_FOLDER, session["user"])
-    os.makedirs(folder, exist_ok=True)
-    return folder
+    f = os.path.join(BASE_DECRYPTED_FOLDER, session["user"])
+    os.makedirs(f, exist_ok=True)
+    return f
 
-# -------- ROUTES -----------
+# ================= ROUTES =================
 
-@app.route('/vault_home')
-def vault_home():
+@app.route("/home")
+def home():
     if "user" not in session:
         return redirect(url_for("login"))
-    otp_value = generate_otp()
-    session['current_otp'] = otp_value
-    return render_template('home.html')
+    session["current_otp"] = generate_otp()
+    return render_template("home.html")
 
-@app.route('/upload_temp', methods=['POST'])
+@app.route("/upload_temp", methods=["POST"])
 def upload_temp():
-    file = request.files.get('file')
+    file = request.files.get("file")
     if file:
-        filename = secure_filename(file.filename)
-        temp_path = os.path.join(BASE_TEMP_FOLDER, filename)
-        file.save(temp_path)
-        session['temp_file'] = temp_path
-        flash("✅ File uploaded temporarily. Lock it now.", "success")
-    else:
-        flash("❌ No file selected.", "error")
-    return redirect(url_for('vault_home'))
+        path = os.path.join(BASE_TEMP_FOLDER, secure_filename(file.filename))
+        file.save(path)
+        session["temp_file"] = path
+        flash("File uploaded. Lock now.", "success")
+    return redirect(url_for("home"))
 
-@app.route('/lock', methods=['POST'])
+@app.route("/lock", methods=["POST"])
 def lock():
-    password = request.form['password']
-    lat = request.form['latitude']
-    lon = request.form['longitude']
-    otp = session.get('current_otp')
-    if not otp:
-        flash("❌ OTP not available. Please generate OTP first.", "error")
-        return redirect(url_for('vault_home'))
+    temp = session.get("temp_file")
+    if not temp or not os.path.exists(temp):
+        flash("No file uploaded.", "error")
+        return redirect(url_for("home"))
 
-    temp_file = session.get('temp_file')
-    if not temp_file or not os.path.exists(temp_file):
-        flash("❌ No uploaded file to lock.", "error")
-        return redirect(url_for('vault_home'))
+    password = request.form["password"].strip()
+    lat = request.form["latitude"][:2]
+    lon = request.form["longitude"][:2]
+    otp = session.get("current_otp")
 
-    with open(temp_file, 'rb') as f:
-        file_data = f.read()
+    data = open(temp, "rb").read()
+    meta = f"{password}|{lat}|{lon}|{otp}".encode()
+    encrypted = cipher.encrypt(meta + b"::SEP::" + data)
 
-    content_to_encrypt = file_data.decode(errors='ignore') + password + lat + lon + otp
-    encrypted_data = encrypt_data(content_to_encrypt)
+    out = os.path.join(get_user_locked_folder(), os.path.basename(temp) + ".locked")
+    open(out, "wb").write(encrypted)
+    os.remove(temp)
 
-    locked_filename = os.path.basename(temp_file) + '.locked'
-    locked_path = os.path.join(get_user_locked_folder(), locked_filename)
-    with open(locked_path, 'w') as f:
-        f.write(encrypted_data)
+    flash("File locked successfully.", "success")
+    return redirect(url_for("open_locked"))
 
-    os.remove(temp_file)
-    session.pop('temp_file', None)
+@app.route("/open_locked")
+def open_locked():
+    files = [f for f in os.listdir(get_user_locked_folder()) if f.endswith(".locked")]
+    return render_template("open_locked.html", files=files)
 
-    flash(f"🔒 File locked and saved using OTP: {otp}", "success")
-    return redirect(url_for('open_locked'))
+@app.route('/decrypt_file', methods=['POST'])
+def decrypt_file():
+    filename = request.form['filename']
+    password = request.form['password'].strip()
+    lat = request.form['latitude'].strip()
+    lon = request.form['longitude'].strip()
+
+    try:
+        file_path = os.path.join(get_user_locked_folder(), filename)
+        if not os.path.exists(file_path):
+            flash("File not found.", "error")
+            return redirect(url_for('open_locked'))
+
+        with open(file_path, 'rb') as f:
+            encrypted_data = f.read()
+
+        decrypted_data = cipher.decrypt(encrypted_data)
+        metadata, file_binary = decrypted_data.split(b"::SEP::", 1)
+        stored_password, stored_lat, stored_lon, stored_otp = metadata.decode().split("|")
+
+        if password == stored_password and lat[:2] == stored_lat and lon[:2] == stored_lon:
+
+            attempts = load_attempts()
+            file_key = f"{session['user']}::{filename}"
+            attempts[file_key] = 0
+            save_attempts(attempts)
+
+            session["current_otp"] = generate_otp()
+
+            original_filename = filename.replace('.locked', '')
+            decrypted_path = os.path.join(get_user_decrypted_folder(), original_filename)
+
+            with open(decrypted_path, 'wb') as f:
+                f.write(file_binary)
+
+            flash(f"File decrypted successfully: {original_filename}", "success")
+            return redirect(url_for('downloadfiles'))
+
+        else:
+            attempts = load_attempts()
+            file_key = f"{session['user']}::{filename}"
+            wrong_count = attempts.get(file_key, 0) + 1
+            attempts[file_key] = wrong_count
+            save_attempts(attempts)
+
+            if wrong_count >= 5:
+                logs = load_logs()
+                logs.append({
+                    "user": session.get("user"),
+                    "file": filename,
+                    "time": time.strftime("%Y-%m-%d %H:%M:%S"),
+                    "lat": lat,
+                    "lon": lon,
+                    "ip": request.remote_addr
+                })
+                save_logs(logs)
+
+                save_lock({"locked": True})
+                flash("SECURITY LOCKDOWN ACTIVATED", "error")
+                return redirect(url_for('unlock_site'))
+
+            flash(f"Invalid credentials. Attempts left: {5-wrong_count}", "error")
+            return redirect(url_for('open_locked'))
+
+    except Exception as e:
+        print("[DECRYPT ERROR]", e)
+        flash("Error decrypting file.", "error")
+        return redirect(url_for('open_locked'))
+
+@app.route("/downloadfiles")
+def downloadfiles():
+    files = os.listdir(get_user_decrypted_folder())
+    return render_template("downloadfiles.html", files=files)
+
+@app.route("/downloadfiles/<filename>")
+def download_decrypted(filename):
+    path = os.path.join(get_user_decrypted_folder(), filename)
+    return send_file(path, as_attachment=True)
+
+@app.route("/unlock_site", methods=["GET", "POST"])
+def unlock_site():
+    if request.method == "POST":
+        if request.form.get("code") == SECRET_CODE:
+            save_lock({"locked": False})
+            flash("Website unlocked.", "success")
+            return redirect(url_for("home"))
+        else:
+            flash("Wrong secret code.", "error")
+    return render_template("unlock.html")
+
+@app.route("/ip", methods=["GET", "POST"])
+def ip_gate():
+    client_ip = request.remote_addr
+    if request.method == "POST":
+        ip_input = request.form.get("ip_address")
+        if ip_input == client_ip:
+            session["access_granted"] = True
+            flash("Access Granted!", "success")
+            return redirect(url_for("latlon_vault"))
+        else:
+            flash("Access Denied", "error")
+    return render_template("ip_gate.html", client_ip=client_ip)
 
 @app.route("/latlon")
 def latlon_vault():
@@ -187,75 +320,10 @@ def latlon_vault():
     decrypted = decrypt_data(encrypted)
     return render_template("latlon.html", secret=decrypted)
 
-@app.route('/open_locked')
-def open_locked():
-    files = [f for f in os.listdir(get_user_locked_folder()) if f.endswith('.locked')]
-    return render_template('open_locked.html', files=files)
+@app.route("/aboutus")
+def aboutus():
+    return render_template("aboutus.html")
 
-@app.route('/decrypt_file', methods=['POST'])
-def decrypt_file():
-    filename = request.form['filename']
-    password = request.form['password']
-    lat = request.form['latitude']
-    lon = request.form['longitude']
-    otp = session.get('current_otp')
-    if not otp:
-        flash("❌ Current OTP missing. Please generate a new OTP before unlocking.", "error")
-        return redirect(url_for('open_locked'))
-
-    try:
-        file_path = os.path.join(get_user_locked_folder(), filename)
-        with open(file_path, 'r') as f:
-            encrypted = f.read()
-
-        decrypted = decrypt_data(encrypted)
-        expected = password + lat + lon + otp
-
-        if expected in decrypted:
-            original_data = decrypted.replace(expected, '').encode('utf-8')
-            original_filename = filename.replace('.locked', '')
-            decrypted_path = os.path.join(get_user_decrypted_folder(), original_filename)
-
-            with open(decrypted_path, 'wb') as f:
-                f.write(original_data)
-
-            flash(f"✅ File decrypted and saved: {original_filename}", "success")
-            return redirect(url_for('downloadfiles'))
-        else:
-            flash("❌ Invalid credentials or OTP. File decryption failed.", "error")
-            return redirect(url_for('open_locked'))
-
-    except Exception as e:
-        print(f"[ERROR] Decryption: {e}")
-        flash("❌ Error decrypting the file.", "error")
-        return redirect(url_for('open_locked'))
-
-@app.route('/downloadfiles')
-def downloadfiles():
-    user_decrypted_folder = get_user_decrypted_folder()
-    files = os.listdir(user_decrypted_folder)
-    return render_template('downloadfiles.html', files=files)
-
-@app.route('/downloadfiles/<filename>')
-def download_decrypted(filename):
-    path = os.path.join(get_user_decrypted_folder(), filename)
-    if os.path.exists(path):
-        return send_file(path, as_attachment=True)
-    flash("❌ File not found.", "error")
-    return redirect(url_for('downloadfiles'))
-
-@app.route("/ip", methods=["GET", "POST"])
-def ip_gate():
-    client_ip = request.remote_addr
-    if request.method == "POST":
-        ip_input = request.form.get("ip_address")
-        if ip_input == client_ip:
-            session["access_granted"] = True
-            flash("✅ Access Granted!", "success")
-            return redirect(url_for("latlon_vault"))
-        else:
-            flash("❌ Access Denied", "error")
-    return render_template("ip_gate.html", client_ip=client_ip)
-
+# ================= RUN =================
 if __name__ == "__main__":
     app.run(debug=True)
