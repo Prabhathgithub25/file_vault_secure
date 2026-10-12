@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Geo Vault Pro - Home</title>
+
+
   <style>
     * {
       margin: 0;
@@ -78,25 +80,85 @@
       color: #111;
     }
 
-    .flash {
-      margin: 10px auto;
-      width: 90%;
-      padding: 10px;
-      border-radius: 6px;
-      font-weight: bold;
-      text-align: center;
-      max-width: 900px;
-    }
+   /* ================= PROFESSIONAL FLASH ================= */
 
-    .flash.success {
-      background-color: rgba(212, 237, 218, 0.85);
-      color: #155724;
-    }
+.flash-container{
+  position:fixed;
+  top:85px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:6000;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  width:auto;
+}
 
-    .flash.error {
-      background-color: rgba(248, 215, 218, 0.85);
-      color: #721c24;
-    }
+/* FLASH BOX */
+.flash{
+  min-width:320px;
+  max-width:520px;
+  padding:14px 18px;
+  border-radius:10px;
+  font-size:14px;
+  font-weight:600;
+  box-shadow:0 8px 25px rgba(0,0,0,0.45);
+  backdrop-filter:blur(10px);
+  border-left:5px solid;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+
+  opacity:0;
+  transform:translateY(-25px) scale(0.97);
+  animation:flashSlideIn .35s ease forwards;
+}
+
+/* SUCCESS */
+.flash.success{
+  background:rgba(27, 39, 66, 0.15);
+  color:#ecf2f0;
+  border-color:#eaeaea;
+}
+
+/* ERROR */
+.flash.error{
+  background:rgba(239,68,68,0.15);
+  color:#ef4444;
+  border-color:#ef4444;
+}
+
+/* CLOSE BUTTON */
+.flash-close{
+  cursor:pointer;
+  font-size:16px;
+  opacity:.75;
+  transition:.2s;
+}
+
+.flash-close:hover{opacity:1}
+
+/* ENTRY */
+@keyframes flashSlideIn{
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
+  }
+}
+
+/* EXIT */
+.flash.hide{
+  animation:flashSlideOut .35s ease forwards;
+}
+
+@keyframes flashSlideOut{
+  to{
+    opacity:0;
+    transform:translateY(-25px) scale(.95);
+  }
+}
+
 
     /* Container below navbar */
     .main-section {
@@ -192,28 +254,23 @@
     .form-box button:hover {
       background-color: #ffdb4d;
     }
+     /* ROBOT */
     #roboGif {
-  position: fixed;
-  bottom: 20px;  /* 20px from bottom */
-  right: 20px;    /* 20px from left */
-  width: 400px;  /* adjust size as needed */
-  height: 400px;
-  z-index: 1000; /* make sure it’s above most things */
-  pointer-events: none; /* so it doesn’t block clicks */
-  user-select: none; /* no text selection */
-  filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.5)); /* subtle shadow */
-  animation: float 4s ease-in-out infinite;
-
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
+      position:fixed;
+      bottom:20px;
+      right:20px;
+      width:400px;
+      height:400px;
+      z-index:1000;
+      cursor:pointer;
+      user-select:none;
+      filter:drop-shadow(2px 2px 3px rgba(0,0,0,0.5));
+      animation:float 4s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%,100% { transform:translateY(0); }
+      50% { transform:translateY(-10px); }
+    }
 
    #lockAnimation {
   position: fixed;
@@ -245,19 +302,163 @@
         margin-right: auto;
       }
     }
+ /* CHAT CONTAINER */
+.chat-container {
+  position: fixed;
+  bottom: 20px;          /* same as robot */
+  right: 20px;           /* same as robot */
+  transform: scale(0.92);
+
+  width: 420px;
+  height: 520px;
+  background: linear-gradient(135deg, #020617, #0f172a);
+  border-radius: 22px;
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.75);
+  z-index: 9999;
+
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.chat-container.active {
+  opacity: 1;
+  transform: scale(1);
+  pointer-events: auto;
+}
+
+
+/* HEADER */
+.chat-header {
+  background: linear-gradient(90deg, #f4c10f, #ffdb4d);
+  color: #000;
+  padding: 14px;
+  font-weight: 700;
+  font-size: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  letter-spacing: 0.5px;
+}
+
+.chat-header span {
+  cursor: pointer;
+  font-size: 16px;
+}
+
+/* MESSAGE AREA */
+.chat-messages {
+  flex: 1;
+  padding: 12px;
+  overflow-y: auto;
+  background: transparent;
+}
+
+/* remove top gap for first message */
+.chat-messages .user-msg:first-child,
+.chat-messages .bot-msg:first-child {
+  margin-top: 0;
+}
+
+/* USER MESSAGE */
+.user-msg {
+ display: block;
+  width: fit-content;
+  max-width: 80%;
+  margin: 8px 0 8px auto;   /* push to right */
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  border-radius: 18px;      /* full curve */
+  font-size: 13px;
+  color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* BOT MESSAGE */
+.bot-msg {
+ 
+  display: block;
+  width: fit-content;
+  max-width: 80%;
+  margin: 8px auto 8px 0;   /* stay left */
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 18px;      /* full curve */
+  font-size: 13px;
+  color: #f4c10f;
+  backdrop-filter: blur(4px);
+}
+
+
+
+/* INPUT AREA */
+.chat-input {
+  display: flex;
+  padding: 10px;
+  background: rgba(255,255,255,0.03);
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.chat-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  outline: none;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 13px;
+}
+
+.chat-input input::placeholder {
+  color: #bbb;
+}
+
+.chat-input button {
+  margin-left: 8px;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #f4c10f, #ffdb4d);
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.chat-input button:hover {
+  transform: scale(1.05);
+}
+
+/* SCROLLBAR */
+.chat-messages::-webkit-scrollbar {
+  width: 5px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.2);
+  border-radius: 10px;
+}
+
+
+
   </style>
 </head>
 <body>
   <div class="navbar">
     <div class="logo">
-      <span>Geo Vault Pro</span>
+      <span>File Vault Secure</span>
     </div>
     <div class="navbar-left">
       <a href="{{ url_for('home') }}">HOME</a>
       <a href="{{ url_for('ip_gate') }}">LAT&LON</a>
       <a href="{{ url_for('open_locked') }}">FOLDERS</a>
       <a href="{{ url_for('downloadfiles') }}">DECRYPTED FILES</a>
-      <a href="/about">ABOUT-US</a>
+    <a href="{{ url_for('aboutus') }}">ABOUT-US</a>
+
        <a href="{{ url_for('logout') }}">LOGOUT</a>
     
     </div>
@@ -267,13 +468,19 @@
     <button onclick="history.back()">← Back</button>
   </div>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, message in messages %}
-        <div class="flash {{ category }}">{{ message }}</div>
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+  <div class="flash-container">
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="flash {{ category }}">
+        <span>{{ message }}</span>
+        <span class="flash-close" onclick="closeFlash(this)">✖</span>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+</div>
+
 
   <div class="main-section">
     <div class="otp-below">
@@ -358,6 +565,148 @@
       }
     });
   </script>
+
+ 
+<!-- BOT KNOWLEDGE -->
+<script src="{{ url_for('static', filename='bot.js') }}"></script>
+
+<script>
+function toggleChat() {
+  const chat = document.getElementById("chatBox");
+  chat.classList.toggle("active");
+
+  // Auto focus input when opened
+  if (chat.classList.contains("active")) {
+    const input = document.getElementById("userInput");
+    if (input) input.focus();
+  }
+}
+
+function sendMessage() {
+  const input = document.getElementById("userInput");
+  if (!input) return;
+
+  const rawMsg = input.value.trim();
+  if (!rawMsg) return;
+
+  const msg = rawMsg.toLowerCase();
+  const chat = document.getElementById("chatMessages");
+  if (!chat) return;
+
+  /* USER MESSAGE */
+  const userDiv = document.createElement("div");
+  userDiv.className = "user-msg";
+  userDiv.textContent = rawMsg;
+  chat.appendChild(userDiv);
+  chat.scrollTop = chat.scrollHeight;
+
+  /* CHECK bot.js */
+  if (typeof botKnowledge === "undefined") {
+    const botDiv = document.createElement("div");
+    botDiv.className = "bot-msg";
+    botDiv.textContent = "SecureMind: Knowledge base not loaded.";
+    chat.appendChild(botDiv);
+    chat.scrollTop = chat.scrollHeight;
+    input.value = "";
+    return;
+  }
+
+  /* DEFAULT */
+  let reply = botKnowledge.default || "I am SecureMind, your assistant.";
+
+  /* MATCHING (priority order) */
+  if (/(hello|hi|hey)\b/.test(msg))
+    reply = botKnowledge.greeting || reply;
+
+  else if (msg.includes("help"))
+    reply = botKnowledge.help || reply;
+
+  else if (msg.includes("about"))
+    reply = botKnowledge.about || reply;
+
+  else if (/(founder|developer|creator)/.test(msg))
+    reply = botKnowledge.founder || reply;
+
+  else if (/(unlock|decrypt)/.test(msg))
+    reply = botKnowledge.unlock || reply;
+
+  else if (msg.includes("lock"))
+    reply = botKnowledge.lock || reply;
+
+  else if (msg.includes("upload"))
+    reply = botKnowledge.upload || reply;
+
+  else if (msg.includes("credential"))
+    reply = botKnowledge.credentials || reply;
+
+  else if (msg.includes("otp"))
+    reply = botKnowledge.otp || reply;
+
+  else if (msg.includes("password"))
+    reply = botKnowledge.password || reply;
+
+  else if (msg.includes("latitude"))
+    reply = botKnowledge.latitude || reply;
+
+  else if (msg.includes("longitude"))
+    reply = botKnowledge.longitude || reply;
+
+  else if (msg.includes("location"))
+    reply = botKnowledge.location || reply;
+
+  else if (/(security|safe)/.test(msg))
+    reply = botKnowledge.security || reply;
+
+  else if (/(encrypt|encryption)/.test(msg))
+    reply = botKnowledge.encryption || reply;
+
+  else if (msg.includes("file"))
+    reply = botKnowledge.files || reply;
+
+  else if (msg.includes("download"))
+    reply = botKnowledge.download || reply;
+
+  else if (/(error|fail|wrong)/.test(msg))
+    reply = botKnowledge.error || reply;
+
+  else if (/(slow|lag)/.test(msg))
+    reply = botKnowledge.slow || reply;
+
+  else if (msg.includes("logout"))
+    reply = botKnowledge.logout || reply;
+
+  else if (/(assistant|who are you)/.test(msg))
+    reply = botKnowledge.assistant || reply;
+
+  /* BOT MESSAGE */
+  setTimeout(() => {
+    const botDiv = document.createElement("div");
+    botDiv.className = "bot-msg";
+    botDiv.textContent = "SecureMind: " + reply;
+    chat.appendChild(botDiv);
+    chat.scrollTop = chat.scrollHeight;
+  }, 180);
+
+  input.value = "";
+}
+
+/* ENTER KEY */
+document.addEventListener("DOMContentLoaded", function () {
+  const input = document.getElementById("userInput");
+  if (!input) return;
+
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendMessage();
+    }
+  });
+});
+</script>
+
+
+
+
   <script>
     const lockForm = document.querySelector('form[action="/lock"]');
     lockForm.addEventListener('submit', function(event) {
@@ -373,8 +722,43 @@
 <div id="lockAnimation" style="display:none;">
   <img src="{{ url_for('static', filename='folder.gif') }}" alt="Locking animation" />
 </div>
-<img src="{{ url_for('static', filename='robo.gif') }}" alt="Robot" id="roboGif" />
+<!-- ROBOT -->
+<img src="{{ url_for('static', filename='robo.gif') }}" alt="Robot" id="roboGif" onclick="toggleChat()" />
 
+<!-- CHAT -->
+ <div id="chatOverlay" class="chat-overlay" onclick="toggleChat()"></div>
+<div id="chatBox" class="chat-container">
+  <div class="chat-header">
+    🧠 SecureMind
+
+    <span onclick="toggleChat()" style="cursor:pointer;">✖</span>
+  </div>
+
+  <div id="chatMessages" class="chat-messages"></div>
+
+  <div class="chat-input">
+    <input type="text" id="userInput" placeholder="Type message..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+/* Auto dismiss after 4s */
+setTimeout(()=>{
+  document.querySelectorAll(".flash").forEach(el=>{
+    el.classList.add("hide");
+    setTimeout(()=>el.remove(),350);
+  });
+},2600);
+
+/* Manual close */
+function closeFlash(btn){
+  const box = btn.parentElement;
+  box.classList.add("hide");
+  setTimeout(()=>box.remove(),350);
+}
+</script>
 
 </body>
+
 </html>
